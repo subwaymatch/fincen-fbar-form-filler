@@ -1,0 +1,29 @@
+{
+  "name": "fbar-filler",
+  "version": "0.1.0",
+  "description": "Fill in the FBAR from an Excel sheet",
+  "main": "build/src/index.js",
+  "scripts": {
+    "start": "ts-node -r tsconfig-paths/register src/index.ts",
+    "watch": "nodemon --exec ts-node -r tsconfig-paths/register src/index.ts"
+  },
+  "engines": {
+    "node": ">=18.0.0 <19.0.0"
+  },
+  "dependencies": {
+    "config": "^3.3.9",
+    "dayjs": "^1.11.7",
+    "exceljs": "^4.3.0",
+    "glob": "^9.3.4",
+    "puppeteer-core": "^19.8.5"
+  },
+  "devDependencies": {
+    "@tsconfig/node18": "^1.0.1",
+    "@types/config": "^3.3.0",
+    "@types/node": "^18.15.11",
+    "nodemon": "^2.0.22",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.0.2"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "email": "johndoe@gmail.com",
+  "firstName": "John",
+  "middleName": "",
+  "lastName": "Doe",
+  "phoneNumber": "1234567890",
+  "SSN": "123-45-6789",
+  "DOB": "01/01/1980",
+  "address": "123 Some Road",
+  "city": "Los Angeles",
+  "state": "CA",
+  "ZIP": "90006"
+}
