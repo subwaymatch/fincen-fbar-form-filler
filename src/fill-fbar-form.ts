@@ -1,12 +1,12 @@
 import puppeteer from "puppeteer-core";
 import config from "config";
-import { getAccountsFromExcelFile } from "@get-accounts";
+import { getAccounts } from "@get-accounts";
 import { getProfile } from "@get-profile";
 import dayjs from "dayjs";
 import { waitForTimeout } from "@utils/browser-page";
 
 export async function fillFBARForm() {
-  const accounts = await getAccountsFromExcelFile();
+  const accounts = await getAccounts();
   console.log(accounts);
 
   const profile = await getProfile();
