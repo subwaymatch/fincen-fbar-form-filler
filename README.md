@@ -28,8 +28,13 @@ module.exports = {
       "C:/Program Files/Google/Chrome/Application/chrome.exe",
   },
   inputDataDirectoryPath: "input-data/john-doe",
+  usdToKrwExchangeRate: 1300.0,
 };
 ```
+
+- `puppeteerConfig.chromeExecutablePath`: Path to Chrome executable
+- `inputDataDirectoryPath`: Path to filer data and profile
+- `usdToKrwExchangeRate`: USD to KRW exchange rate
 
 ## Running script
 
