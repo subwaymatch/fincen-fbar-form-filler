@@ -19,7 +19,7 @@ export async function fillFBARForm() {
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 1024 });
   await page.goto(
-    "https://bsaefiling1.fincen.treas.gov/lc/content/xfaforms/profiles/htmldefault.html",
+    "https://bsaefiling.fincen.gov/lc/content/xfaforms/profiles/htmldefault.html",
     { waitUntil: "domcontentloaded" }
   );
   await waitForTimeout(1000);

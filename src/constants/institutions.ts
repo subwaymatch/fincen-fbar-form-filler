@@ -32,4 +32,11 @@ export const institutions: Record<string, IInstitutionInformation> = {
     postalCode: "13494",
     country: CountryOptionValueEnum.SOUTH_KOREA,
   },
+  미래에셋증권: {
+    institutionName: "MIRAE ASSET SECURITIES",
+    address: "26, EULJI-RO 5-GIL, JUNG-GU",
+    city: "SEOUL",
+    postalCode: "04539",
+    country: CountryOptionValueEnum.SOUTH_KOREA,
+  },
 };
