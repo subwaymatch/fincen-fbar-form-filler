@@ -29,17 +29,30 @@ async function fillInput(
   await waitForTimeout(delay);
 }
 
-async function clickRequired(page: PuppeteerPage, selector: string, error: string) {
+async function clickRequired(
+  page: PuppeteerPage,
+  selector: string,
+  error: string,
+) {
   const element = await page.$(selector);
   if (!element) {
     throw new Error(error);
   }
 
+  await element.evaluate((el) =>
+    el.scrollIntoView({ block: "center", inline: "center" }),
+  );
+
+  await waitForTimeout(100);
+
   await element.click();
   await waitForTimeout(100);
 }
 
-async function fillHomeTab(page: PuppeteerPage, { profile, reportYear }: IFbarContext) {
+async function fillHomeTab(
+  page: PuppeteerPage,
+  { profile, reportYear }: IFbarContext,
+) {
   const filingName = `${profile.firstName.toUpperCase()} ${profile.lastName.toUpperCase()} FBAR ${reportYear}`;
 
   await fillInput(page, '[name="home.filingName"]', filingName);
@@ -49,7 +62,11 @@ async function fillFilerInformationTab(
   page: PuppeteerPage,
   { dateOfBirth, profile, reportYear }: IFbarContext,
 ) {
-  await clickRequired(page, '[data-testid="label-button-1"]', "label-button-1 not found");
+  await clickRequired(
+    page,
+    '[data-testid="label-button-1"]',
+    "label-button-1 not found",
+  );
 
   await fillInput(page, '[name="filerInfo.calendarYear"]', String(reportYear));
 
@@ -113,7 +130,11 @@ async function fillAccountInformationTab(
   page: PuppeteerPage,
   { accounts }: IFbarContext,
 ) {
-  await clickRequired(page, '[data-testid="label-button-2"]', "label-button-2 not found");
+  await clickRequired(
+    page,
+    '[data-testid="label-button-2"]',
+    "label-button-2 not found",
+  );
 
   await page.waitForSelector('[data-testid="seperate-account-add"]');
   await waitForTimeout(100);
@@ -180,7 +201,11 @@ async function fillAccountInformationTab(
 }
 
 async function fillSubmitTab(page: PuppeteerPage, { profile }: IFbarContext) {
-  await clickRequired(page, '[data-testid="label-button-4"]', "label-button-4 not found");
+  await clickRequired(
+    page,
+    '[data-testid="label-button-4"]',
+    "label-button-4 not found",
+  );
 
   await fillInput(page, '[data-testid="email-address-input"]', profile.email);
   await fillInput(
