@@ -19,7 +19,6 @@
     "puppeteer-core": "^24.41.0"
   },
   "devDependencies": {
-    "@types/config": "^4.4.0",
     "nodemon": "^3.1.14",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"

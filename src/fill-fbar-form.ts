@@ -4,16 +4,15 @@ import { getAccounts } from "@get-accounts";
 import { getProfile } from "@get-profile";
 import dayjs from "dayjs";
 import { waitForTimeout } from "@utils/browser-page";
+import { IBankAccount } from "@type-definitions/bank-accounts";
+import IProfile from "@type-definitions/IProfile";
 
-const profile = await getProfile();
-console.log(profile);
-
-const accounts = await getAccounts();
-console.log(accounts);
-
-const dateOfBirth = dayjs(profile.DOB);
-const today = dayjs();
-const reportYear = today.year() - 1;
+interface IFbarContext {
+  accounts: IBankAccount[];
+  dateOfBirth: dayjs.Dayjs;
+  profile: IProfile;
+  reportYear: number;
+}
 
 async function fillInput(
   page: PuppeteerPage,
@@ -30,20 +29,27 @@ async function fillInput(
   await waitForTimeout(delay);
 }
 
-async function fillHomeTab(page: PuppeteerPage) {
-  const filingName = `${profile.firstName.toUpperCase()} ${profile.lastName.toUpperCase()} FBAR ${
-    reportYear
-  }`;
+async function clickRequired(page: PuppeteerPage, selector: string, error: string) {
+  const element = await page.$(selector);
+  if (!element) {
+    throw new Error(error);
+  }
+
+  await element.click();
+  await waitForTimeout(100);
+}
+
+async function fillHomeTab(page: PuppeteerPage, { profile, reportYear }: IFbarContext) {
+  const filingName = `${profile.firstName.toUpperCase()} ${profile.lastName.toUpperCase()} FBAR ${reportYear}`;
 
   await fillInput(page, '[name="home.filingName"]', filingName);
 }
 
-async function fillFilerInformationTab(page: PuppeteerPage) {
-  // Navigate to "Filer Information" page
-  const filerInformationBtn = await page.$('[data-testid="label-button-1"]');
-  if (!filerInformationBtn) throw new Error("label-button-1 not found");
-  await filerInformationBtn.click();
-  await waitForTimeout(100);
+async function fillFilerInformationTab(
+  page: PuppeteerPage,
+  { dateOfBirth, profile, reportYear }: IFbarContext,
+) {
+  await clickRequired(page, '[data-testid="label-button-1"]', "label-button-1 not found");
 
   await fillInput(page, '[name="filerInfo.calendarYear"]', String(reportYear));
 
@@ -90,48 +96,36 @@ async function fillFilerInformationTab(page: PuppeteerPage) {
 
   await fillInput(page, '[name="filerInfo.zipCode"]', profile.ZIP);
 
-  const noInterestBtn = await page.$(
+  await clickRequired(
+    page,
     'label[for="filerInfo.hasFinancialInterest.no"]',
+    "hasFinancialInterest.no not found",
   );
-  if (!noInterestBtn) throw new Error("hasFinancialInterest.no not found");
-  await noInterestBtn.click();
-  await waitForTimeout(100);
 
-  const noSignatureBtn = await page.$(
+  await clickRequired(
+    page,
     'label[for="filerInfo.hasFinancialSignatureNoInterest.no"]',
+    "hasFinancialSignatureNoInterest.no not found",
   );
-  if (!noSignatureBtn)
-    throw new Error("hasFinancialSignatureNoInterest.no not found");
-  await noSignatureBtn.click();
-  await waitForTimeout(100);
 }
 
-async function fillAccountInformationTab(page: PuppeteerPage) {
-  // Navigate to "Account Information" page
-  await page.click('[data-testid="label-button-2"]');
-  await waitForTimeout(100);
+async function fillAccountInformationTab(
+  page: PuppeteerPage,
+  { accounts }: IFbarContext,
+) {
+  await clickRequired(page, '[data-testid="label-button-2"]', "label-button-2 not found");
 
   await page.waitForSelector('[data-testid="seperate-account-add"]');
-  console.log("Found 'Add Separate Account' button");
   await waitForTimeout(100);
-
-  await page.$eval('[data-testid="seperate-account-add"]', (el) =>
-    el.scrollIntoView({ block: "center", inline: "center" }),
-  );
-  await waitForTimeout(300);
-
-  const separateAccountAddBtn = await page.$(
-    '[data-testid="seperate-account-add"]',
-  );
-  if (!separateAccountAddBtn)
-    throw new Error("seperate-account-add button not found");
 
   // add financial account(s) owned separately
   for (let accountIndex = 0; accountIndex < accounts.length; accountIndex++) {
-    await separateAccountAddBtn.click();
-    await waitForTimeout(100);
-
     const account = accounts[accountIndex];
+    await clickRequired(
+      page,
+      '[data-testid="seperate-account-add"]',
+      "seperate-account-add button not found",
+    );
 
     await fillInput(
       page,
@@ -185,12 +179,8 @@ async function fillAccountInformationTab(page: PuppeteerPage) {
   }
 }
 
-async function fillSubmitTab(page: PuppeteerPage) {
-  // Navigate to "Filer Information" page
-  const submitTabBtn = await page.$('[data-testid="label-button-4"]');
-  if (!submitTabBtn) throw new Error("label-button-4 not found");
-  await submitTabBtn.click();
-  await waitForTimeout(100);
+async function fillSubmitTab(page: PuppeteerPage, { profile }: IFbarContext) {
+  await clickRequired(page, '[data-testid="label-button-4"]', "label-button-4 not found");
 
   await fillInput(page, '[data-testid="email-address-input"]', profile.email);
   await fillInput(
@@ -209,6 +199,15 @@ async function fillSubmitTab(page: PuppeteerPage) {
 }
 
 export async function fillFBARForm() {
+  const profile = getProfile();
+  const accounts = await getAccounts();
+  const context: IFbarContext = {
+    accounts,
+    dateOfBirth: dayjs(profile.DOB),
+    profile,
+    reportYear: dayjs().year() - 1,
+  };
+
   const browser = await puppeteer.launch({
     executablePath: config.get("puppeteerConfig.chromeExecutablePath"),
     headless: false,
@@ -226,11 +225,11 @@ export async function fillFBARForm() {
 
   await waitForTimeout(100);
 
-  await fillHomeTab(page);
+  await fillHomeTab(page, context);
 
-  await fillFilerInformationTab(page);
+  await fillFilerInformationTab(page, context);
 
-  await fillAccountInformationTab(page);
+  await fillAccountInformationTab(page, context);
 
-  await fillSubmitTab(page);
+  await fillSubmitTab(page, context);
 }

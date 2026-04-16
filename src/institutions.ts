@@ -4,6 +4,5 @@ import { IInstitutionInformation } from "@type-definitions/bank-accounts";
 export function getInstitutionInformation(
   key: string
 ): IInstitutionInformation | null {
-  institutions;
-  return institutions.hasOwnProperty(key) ? institutions[key] : null;
+  return Object.hasOwn(institutions, key) ? institutions[key] : null;
 }
