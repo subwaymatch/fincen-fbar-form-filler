@@ -5,8 +5,12 @@ import { getProfile } from "@get-profile";
 import dayjs from "dayjs";
 import { waitForTimeout } from "@utils/browser-page";
 
-const accounts = await getAccounts();
 const profile = await getProfile();
+console.log(profile);
+
+const accounts = await getAccounts();
+console.log(accounts);
+
 const dateOfBirth = dayjs(profile.DOB);
 const today = dayjs();
 const reportYear = today.year() - 1;
@@ -23,9 +27,10 @@ async function fillInput(
   if (hitEnter) {
     await page.keyboard.press("Enter");
   }
+  await waitForTimeout(delay);
 }
 
-async function fillHomepage(page: PuppeteerPage) {
+async function fillHomeTab(page: PuppeteerPage) {
   const filingName = `${profile.firstName.toUpperCase()} ${profile.lastName.toUpperCase()} FBAR ${
     reportYear
   }`;
@@ -33,7 +38,7 @@ async function fillHomepage(page: PuppeteerPage) {
   await fillInput(page, '[name="home.filingName"]', filingName);
 }
 
-async function fillFilerInformation(page: PuppeteerPage) {
+async function fillFilerInformationTab(page: PuppeteerPage) {
   // Navigate to "Filer Information" page
   const filerInformationBtn = await page.$('[data-testid="label-button-1"]');
   if (!filerInformationBtn) throw new Error("label-button-1 not found");
@@ -101,7 +106,7 @@ async function fillFilerInformation(page: PuppeteerPage) {
   await waitForTimeout(100);
 }
 
-async function fillAccountInformation(page: PuppeteerPage) {
+async function fillAccountInformationTab(page: PuppeteerPage) {
   // Navigate to "Account Information" page
   await page.click('[data-testid="label-button-2"]');
   await waitForTimeout(100);
@@ -121,28 +126,19 @@ async function fillAccountInformation(page: PuppeteerPage) {
   if (!separateAccountAddBtn)
     throw new Error("seperate-account-add button not found");
 
-  console.log(accounts);
-
   // add financial account(s) owned separately
-  for (
-    let accountIndex = 0;
-    accountIndex < accounts.length - 1;
-    accountIndex++
-  ) {
+  for (let accountIndex = 0; accountIndex < accounts.length; accountIndex++) {
     await separateAccountAddBtn.click();
     await waitForTimeout(100);
 
     const account = accounts[accountIndex];
 
-    const subformNameIncludesValueMap: Record<string, string> = {
-      "Maximum account value": String(account.maxAccountValueInUSD),
-      "Financial institution name": account.institution.institutionName,
-      "Account number or other designation": account.accountNumber,
-      Address: account.institution.address,
-      City: account.institution.city,
-      country: account.institution.country,
-      "Foreign postal code": account.institution.postalCode,
-    };
+    await fillInput(
+      page,
+      `#separateAccounts\\[${accountIndex}\\]\\.country`,
+      account.institution.country,
+      true,
+    );
 
     await fillInput(
       page,
@@ -150,8 +146,66 @@ async function fillAccountInformation(page: PuppeteerPage) {
       String(account.maxAccountValueInUSD),
     );
 
-    await waitForTimeout(100);
+    await fillInput(
+      page,
+      `#separateAccounts\\[${accountIndex}\\]\\.typeOfAccount`,
+      account.accountType,
+      true,
+    );
+
+    await fillInput(
+      page,
+      `[name="separateAccounts[${accountIndex}].financialInstituteName"]`,
+      account.institution.institutionName,
+    );
+
+    await fillInput(
+      page,
+      `[name="separateAccounts[${accountIndex}].accountNumber"]`,
+      account.accountNumber,
+    );
+
+    await fillInput(
+      page,
+      `[name="separateAccounts[${accountIndex}].address"]`,
+      account.institution.address,
+    );
+
+    await fillInput(
+      page,
+      `[name="separateAccounts[${accountIndex}].city"]`,
+      account.institution.city,
+    );
+
+    await fillInput(
+      page,
+      `[name="separateAccounts[${accountIndex}].zipCode"]`,
+      account.institution.postalCode,
+    );
   }
+}
+
+async function fillSubmitTab(page: PuppeteerPage) {
+  // Navigate to "Filer Information" page
+  const submitTabBtn = await page.$('[data-testid="label-button-4"]');
+  if (!submitTabBtn) throw new Error("label-button-4 not found");
+  await submitTabBtn.click();
+  await waitForTimeout(100);
+
+  await fillInput(page, '[data-testid="email-address-input"]', profile.email);
+  await fillInput(
+    page,
+    '[data-testid="confirm-email-address-input"]',
+    profile.email,
+  );
+
+  await fillInput(page, '[name="firstName"]', profile.firstName);
+  await fillInput(page, '[name="lastName"]', profile.lastName);
+  await fillInput(
+    page,
+    '[name="phone"]',
+    profile.phoneNumber.replace(/\D/g, ""),
+  );
 }
 
 export async function fillFBARForm() {
@@ -172,120 +226,11 @@ export async function fillFBARForm() {
 
   await waitForTimeout(100);
 
-  // await fillHomepage(page);
+  await fillHomeTab(page);
 
-  // await fillFilerInformation(page);
+  await fillFilerInformationTab(page);
 
-  await fillAccountInformation(page);
+  await fillAccountInformationTab(page);
 
-  return;
-
-  const nameValueMap: Record<string, string> = {
-    Email_5: profile.email,
-    ConfirmedEmail_6: profile.email,
-    FirstName_7: profile.firstName,
-    LastName_8: profile.lastName,
-    PhoneNumber_9: profile.phoneNumber.replace(/\D/g, ""),
-    FilingName_23: `${profile.firstName.toUpperCase()} ${profile.lastName.toUpperCase()} FBAR ${
-      today.year() - 1
-    }`,
-    CalYear_55: String(today.year() - 1),
-    TIN_65: profile.SSN.replace(/\D/g, ""),
-    LastName_78: profile.lastName,
-    FirstName_83: profile.firstName,
-    MiddleName_84: profile.middleName,
-    Address_86: profile.address,
-    City_87: profile.city,
-    ZIP_89: profile.ZIP,
-  };
-
-  for (const inputName in nameValueMap) {
-    await page.type(`[name="${inputName}"]`, nameValueMap[inputName]);
-  }
-
-  const selectNameValueMap: Record<string, string> = {
-    FilerType_62: "A",
-    TINTYPE_66: "B",
-    month_80: dateOfBirth.format("MM"),
-    day_81: dateOfBirth.format("DD"),
-    year_79: dateOfBirth.format("YYYY"),
-  };
-
-  for (const selectName in selectNameValueMap) {
-    await page.select(`[name="${selectName}"]`, selectNameValueMap[selectName]);
-    await waitForTimeout(100);
-  }
-
-  // manually handle country and state
-  await page.click('[name="CountryIndividual_90"]');
-  await waitForTimeout(200);
-  await page.keyboard.press("Escape");
-  await waitForTimeout(200);
-
-  await page.select(`[name="CountryIndividual_90"]`, "US ");
-  await waitForTimeout(1000);
-
-  await page.click('[name="State_88"]');
-  await waitForTimeout(200);
-  await page.keyboard.press("Escape");
-  await waitForTimeout(200);
-
-  await page.select(`[name="State_88"]`, `${profile.state} `);
-  await waitForTimeout(200);
-
-  const clickToCheckEls = [
-    "InterestIn25OrMoreNo_94",
-    "SigAuthIn25OrMoreNo_101",
-  ];
-
-  for (const checkboxName of clickToCheckEls) {
-    await page.click(`[name="${checkboxName}"]`);
-  }
-
-  // add financial account(s) owned separately
-  for (let i = 0; i < accounts.length - 1; i++) {
-    await page.click(`[name="Addpart2_108"]`);
-    await waitForTimeout(100);
-  }
-
-  const subformEls = await page.$$(".subform.Part2");
-
-  // verify that the number of subforms are correct
-  if (subformEls.length !== accounts.length) {
-    throw new Error(
-      "Number of subforms for accounts should match the number of accounts",
-    );
-  }
-
-  for (let accountIndex = 0; accountIndex < accounts.length; accountIndex++) {
-    const account = accounts[accountIndex];
-    const subformEl = subformEls[accountIndex];
-
-    const subformNameIncludesValueMap: Record<string, string> = {
-      "Maximum account value": String(account.maxAccountValueInUSD),
-      "Financial institution name": account.institution.institutionName,
-      "Account number or other designation": account.accountNumber,
-      Address: account.institution.address,
-      City: account.institution.city,
-      "Foreign postal code": account.institution.postalCode,
-    };
-
-    for (const inputName in subformNameIncludesValueMap) {
-      const targetEl = await subformEl.$(`[aria-label*="${inputName}"]`);
-
-      await targetEl?.type(subformNameIncludesValueMap[inputName]);
-    }
-
-    const accountTypeSelectEl = await subformEl.$(
-      `[aria-label*="Type of account"]`,
-    );
-
-    await accountTypeSelectEl?.select("A");
-    await waitForTimeout(100);
-
-    const countrySelectEl = await subformEl.$(`select[name^="Country"]`);
-
-    countrySelectEl?.select(`${account.institution.country} `);
-    await waitForTimeout(100);
-  }
+  await fillSubmitTab(page);
 }

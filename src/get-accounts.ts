@@ -1,7 +1,6 @@
 import ExcelJS from "exceljs";
 import config from "config";
 import {
-  AccountTypeOptionValueEnum,
   IBankAccount,
   IInstitutionInformation,
 } from "@type-definitions/bank-accounts";
@@ -50,13 +49,13 @@ export async function getAccounts(): Promise<IBankAccount[]> {
     const account: IBankAccount = {
       accountHolderName: String(row.getCell(2).value),
       institution: getInstitutionInformation(
-        String(row.getCell(3).value)
+        String(row.getCell(3).value),
       ) as IInstitutionInformation,
       accountNumber: String(row.getCell(4).text).replace(/\D/g, ""),
       openedYear: Number(row.getCell(5).value),
       closedYear:
         row.getCell(6).value === null ? null : Number(row.getCell(6).value),
-      accountType: AccountTypeOptionValueEnum.BANK,
+      accountType: "Bank",
       maxAccountValueInUSD: krwToUsd(Number(row.getCell(7).value)),
     };
 

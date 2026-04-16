@@ -4,7 +4,7 @@ export interface IBankAccount {
   accountNumber: string;
   openedYear: number;
   closedYear: number | null;
-  accountType: AccountTypeOptionValueEnum;
+  accountType: string;
   maxAccountValueInUSD: number;
 }
 
@@ -14,10 +14,4 @@ export interface IInstitutionInformation {
   city: string;
   postalCode: string;
   country: string;
-}
-
-export enum AccountTypeOptionValueEnum {
-  BANK = "A",
-  SECURITIES = "B",
-  OTHER = "Z",
 }
