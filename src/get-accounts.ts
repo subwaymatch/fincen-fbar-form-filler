@@ -1,9 +1,6 @@
 import ExcelJS from "exceljs";
 import config from "config";
-import {
-  IBankAccount,
-  IInstitutionInformation,
-} from "@type-definitions/bank-accounts";
+import { IBankAccount } from "@type-definitions/bank-accounts";
 import { getInstitutionInformation } from "@institutions";
 import { glob } from "glob";
 import path from "path";
@@ -35,10 +32,9 @@ export async function getAccounts(): Promise<IBankAccount[]> {
   const accounts: IBankAccount[] = [];
 
   worksheet.eachRow((row) => {
-    let isAccountNumberFormat = /[\d-]+/.test(row.getCell(4).text);
+    const isAccountNumberFormat = /[\d-]+/.test(row.getCell(4).text);
 
     if (
-      row.getCell(2).value == null ||
       row.getCell(3).value == null ||
       !isAccountNumberFormat ||
       row.getCell(5).value == null
@@ -46,15 +42,15 @@ export async function getAccounts(): Promise<IBankAccount[]> {
       return;
     }
 
+    const institutionName = String(row.getCell(3).value);
+    const institution = getInstitutionInformation(institutionName);
+    if (!institution) {
+      throw new Error(`Unsupported institution: ${institutionName}`);
+    }
+
     const account: IBankAccount = {
-      accountHolderName: String(row.getCell(2).value),
-      institution: getInstitutionInformation(
-        String(row.getCell(3).value),
-      ) as IInstitutionInformation,
+      institution,
       accountNumber: String(row.getCell(4).text).replace(/\D/g, ""),
-      openedYear: Number(row.getCell(5).value),
-      closedYear:
-        row.getCell(6).value === null ? null : Number(row.getCell(6).value),
       accountType: "Bank",
       maxAccountValueInUSD: krwToUsd(Number(row.getCell(7).value)),
     };

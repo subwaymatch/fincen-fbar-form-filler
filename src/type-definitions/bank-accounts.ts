@@ -1,9 +1,6 @@
 export interface IBankAccount {
-  accountHolderName: string;
   institution: IInstitutionInformation;
   accountNumber: string;
-  openedYear: number;
-  closedYear: number | null;
   accountType: string;
   maxAccountValueInUSD: number;
 }
