@@ -1,42 +1,39 @@
-import {
-  CountryOptionValueEnum,
-  IInstitutionInformation,
-} from "@type-definitions/bank-accounts";
+import { IInstitutionInformation } from "@type-definitions/bank-accounts";
 
 export const institutions: Record<string, IInstitutionInformation> = {
   신한은행: {
-    institutionName: "SHINHAN BANK",
-    address: "20, SEJONG-DAERO 9-GIL, JUNG-GU",
-    city: "SEOUL",
+    institutionName: "Shinhan Bank",
+    address: "20, Sejong-Daero 9-Gil, Jung-Gu",
+    city: "Seoul",
     postalCode: "04513",
-    country: CountryOptionValueEnum.SOUTH_KOREA,
+    country: "Korea, Republic Of",
   },
   우리은행: {
-    institutionName: "WOORI BANK",
-    address: "51 SOGONG-RO, JUNG-GU",
-    city: "SEOUL",
+    institutionName: "Woori Bank",
+    address: "51 Sogong-Ro, Jung-Gu",
+    city: "Seoul",
     postalCode: "04632",
-    country: CountryOptionValueEnum.SOUTH_KOREA,
+    country: "Korea, Republic Of",
   },
   국민은행: {
-    institutionName: "KB KOOKMIN BANK",
-    address: "84 NAMDAEMUN-RO, JUNG-GU",
-    city: "SEOUL",
+    institutionName: "KB Kookmin Bank",
+    address: "84 Namdaemun-Ro, Jung-Gu",
+    city: "Seoul",
     postalCode: "04534",
-    country: CountryOptionValueEnum.SOUTH_KOREA,
+    country: "Korea, Republic Of",
   },
   카카오뱅크: {
-    institutionName: "KAKAO BANK",
-    address: "PANGYOYEOK-RO , 231 H-SQUARE S-DONG FLOOR 5 BUNDANG-GU",
-    city: "SEONGNAM-SI",
+    institutionName: "Kakao Bank",
+    address: "Pangyoyeok-Ro , 231 H-Square S-Dong Floor 5 Bundang-Gu",
+    city: "Seongnam-si",
     postalCode: "13494",
-    country: CountryOptionValueEnum.SOUTH_KOREA,
+    country: "Korea, Republic Of",
   },
   미래에셋증권: {
-    institutionName: "MIRAE ASSET SECURITIES",
-    address: "26, EULJI-RO 5-GIL, JUNG-GU",
-    city: "SEOUL",
+    institutionName: "Mirae Asset Securities",
+    address: "26, Eulji-Ro 5-Gil, Jung-Gu",
+    city: "Seoul",
     postalCode: "04539",
-    country: CountryOptionValueEnum.SOUTH_KOREA,
+    country: "Korea, Republic Of",
   },
 };

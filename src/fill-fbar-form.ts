@@ -1,31 +1,184 @@
-import puppeteer from "puppeteer-core";
+import puppeteer, { type Page as PuppeteerPage } from "puppeteer-core";
 import config from "config";
 import { getAccounts } from "@get-accounts";
 import { getProfile } from "@get-profile";
 import dayjs from "dayjs";
 import { waitForTimeout } from "@utils/browser-page";
 
-export async function fillFBARForm() {
-  const accounts = await getAccounts();
+const accounts = await getAccounts();
+const profile = await getProfile();
+const dateOfBirth = dayjs(profile.DOB);
+const today = dayjs();
+const reportYear = today.year() - 1;
+
+async function fillInput(
+  page: PuppeteerPage,
+  selector: string,
+  value: string,
+  hitEnter = false,
+  delay = 100,
+) {
+  await page.waitForSelector(selector);
+  await page.type(selector, value);
+  if (hitEnter) {
+    await page.keyboard.press("Enter");
+  }
+}
+
+async function fillHomepage(page: PuppeteerPage) {
+  const filingName = `${profile.firstName.toUpperCase()} ${profile.lastName.toUpperCase()} FBAR ${
+    reportYear
+  }`;
+
+  await fillInput(page, '[name="home.filingName"]', filingName);
+}
+
+async function fillFilerInformation(page: PuppeteerPage) {
+  // Navigate to "Filer Information" page
+  const filerInformationBtn = await page.$('[data-testid="label-button-1"]');
+  if (!filerInformationBtn) throw new Error("label-button-1 not found");
+  await filerInformationBtn.click();
+  await waitForTimeout(100);
+
+  await fillInput(page, '[name="filerInfo.calendarYear"]', String(reportYear));
+
+  await fillInput(page, "#filerInfo\\.filerType", "Individual", true);
+
+  await fillInput(page, "#filerInfo\\.domesticTinType", "SSN/ITIN", true);
+
+  await fillInput(
+    page,
+    '[name="filerInfo.domesticTin"]',
+    profile.SSN.replace(/\D/g, ""),
+  );
+
+  await fillInput(
+    page,
+    '[name="filerInfo.lastNameOrOrgName"]',
+    profile.lastName,
+  );
+
+  await fillInput(page, '[name="filerInfo.firstName"]', profile.firstName);
+
+  if (
+    profile.middleName &&
+    typeof profile.middleName === "string" &&
+    profile.middleName.trim() !== ""
+  ) {
+    await fillInput(page, '[name="filerInfo.middleName"]', profile.middleName);
+  }
+
+  await fillInput(page, "#filerInfo\\.dob", dateOfBirth.format("MM/DD/YYYY"));
+
+  await fillInput(page, '[name="filerInfo.address"]', profile.address);
+
+  await fillInput(page, '[name="filerInfo.city"]', profile.city);
+
+  await fillInput(
+    page,
+    "#filerInfo\\.country",
+    "United States of America",
+    true,
+  );
+
+  await fillInput(page, "#filerInfo\\.state", profile.state, true);
+
+  await fillInput(page, '[name="filerInfo.zipCode"]', profile.ZIP);
+
+  const noInterestBtn = await page.$(
+    'label[for="filerInfo.hasFinancialInterest.no"]',
+  );
+  if (!noInterestBtn) throw new Error("hasFinancialInterest.no not found");
+  await noInterestBtn.click();
+  await waitForTimeout(100);
+
+  const noSignatureBtn = await page.$(
+    'label[for="filerInfo.hasFinancialSignatureNoInterest.no"]',
+  );
+  if (!noSignatureBtn)
+    throw new Error("hasFinancialSignatureNoInterest.no not found");
+  await noSignatureBtn.click();
+  await waitForTimeout(100);
+}
+
+async function fillAccountInformation(page: PuppeteerPage) {
+  // Navigate to "Account Information" page
+  await page.click('[data-testid="label-button-2"]');
+  await waitForTimeout(100);
+
+  await page.waitForSelector('[data-testid="seperate-account-add"]');
+  console.log("Found 'Add Separate Account' button");
+  await waitForTimeout(100);
+
+  await page.$eval('[data-testid="seperate-account-add"]', (el) =>
+    el.scrollIntoView({ block: "center", inline: "center" }),
+  );
+  await waitForTimeout(300);
+
+  const separateAccountAddBtn = await page.$(
+    '[data-testid="seperate-account-add"]',
+  );
+  if (!separateAccountAddBtn)
+    throw new Error("seperate-account-add button not found");
+
   console.log(accounts);
 
-  const profile = await getProfile();
-  console.log(profile);
+  // add financial account(s) owned separately
+  for (
+    let accountIndex = 0;
+    accountIndex < accounts.length - 1;
+    accountIndex++
+  ) {
+    await separateAccountAddBtn.click();
+    await waitForTimeout(100);
 
+    const account = accounts[accountIndex];
+
+    const subformNameIncludesValueMap: Record<string, string> = {
+      "Maximum account value": String(account.maxAccountValueInUSD),
+      "Financial institution name": account.institution.institutionName,
+      "Account number or other designation": account.accountNumber,
+      Address: account.institution.address,
+      City: account.institution.city,
+      country: account.institution.country,
+      "Foreign postal code": account.institution.postalCode,
+    };
+
+    await fillInput(
+      page,
+      `[name="separateAccounts[${accountIndex}].maximumAccountValue"]`,
+      String(account.maxAccountValueInUSD),
+    );
+
+    await waitForTimeout(100);
+  }
+}
+
+export async function fillFBARForm() {
   const browser = await puppeteer.launch({
     executablePath: config.get("puppeteerConfig.chromeExecutablePath"),
     headless: false,
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 1024 });
-  await page.goto(
-    "https://bsaefiling.fincen.gov/lc/content/xfaforms/profiles/htmldefault.html",
-    { waitUntil: "domcontentloaded" }
-  );
+  await page.goto("https://bsaefiling.fincen.gov/file/fbar/html", {
+    waitUntil: "domcontentloaded",
+  });
   await waitForTimeout(1000);
 
-  const today = dayjs();
-  const dateOfBirth = dayjs(profile.DOB);
+  let clickEl = await page.$('[data-testid="agree-button"]');
+  if (!clickEl) throw new Error("Agree button not found");
+  await clickEl.click();
+
+  await waitForTimeout(100);
+
+  // await fillHomepage(page);
+
+  // await fillFilerInformation(page);
+
+  await fillAccountInformation(page);
+
+  return;
 
   const nameValueMap: Record<string, string> = {
     Email_5: profile.email,
@@ -100,7 +253,7 @@ export async function fillFBARForm() {
   // verify that the number of subforms are correct
   if (subformEls.length !== accounts.length) {
     throw new Error(
-      "Number of subforms for accounts should match the number of accounts"
+      "Number of subforms for accounts should match the number of accounts",
     );
   }
 
@@ -124,7 +277,7 @@ export async function fillFBARForm() {
     }
 
     const accountTypeSelectEl = await subformEl.$(
-      `[aria-label*="Type of account"]`
+      `[aria-label*="Type of account"]`,
     );
 
     await accountTypeSelectEl?.select("A");
