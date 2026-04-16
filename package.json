@@ -12,7 +12,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
-    "config": "^3.3.9",
+    "config": "^3.3.12",
     "dayjs": "^1.11.7",
     "exceljs": "^4.3.0",
     "glob": "^9.3.4",
